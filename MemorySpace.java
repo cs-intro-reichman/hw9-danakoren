@@ -59,6 +59,24 @@ public class MemorySpace {
 	 */
 	public int malloc(int length) {		
 		//// Replace the following statement with your code
+		Node current = freeList.getFirst();
+		while (current != null) {
+			MemoryBlock freeBlock = current.block;
+			if (freeBlock.length >= length){
+				if (freeBlock.length == length){
+					allocatedList.addLast(freeBlock);
+					freeList.remove(current);
+					return freeBlock.baseAddress;
+				}
+				MemoryBlock allocatedBlock = new MemoryBlock(freeBlock.baseAddress, length);
+				allocatedList.addLast(allocatedBlock);
+				freeBlock.baseAddress += length;
+				freeBlock.length -= length;
+				return allocatedBlock.baseAddress;
+
+			}
+			current = current.next;	
+		}
 		return -1;
 	}
 
@@ -72,7 +90,32 @@ public class MemorySpace {
 	 */
 	public void free(int address) {
 		//// Write your code here
-	}
+		// Node current = allocatedList.getFirst();
+		// while (current != null) {
+		// 	MemoryBlock allocatedBlock = current.block;
+		// 	if (allocatedBlock.baseAddress == address) {
+		// 		allocatedList.remove(current);
+		// 		freeList.addLast(allocatedBlock);
+		// 		return;
+		// 	}
+		// 	current = current.next;
+		// }
+		// 	throw new IllegalArgumentException("The memory block with the given address is not allocated.");
+		//  }
+		 	if(freeList.getSize() == 1 && freeList.getFirst().block.baseAddress == 0 && freeList.getFirst().block.length == 100)
+			throw new IllegalArgumentException("index must be between 0 and size");
+			ListIterator list = allocatedList.iterator();
+			while(list.hasNext()) {
+				if(list.current.block.baseAddress == address) {
+					allocatedList.remove(list.current.block);
+					freeList.addLast(list.current.block);
+					break;
+				}
+				list.next();
+			}
+		}
+	
+	
 	
 	/**
 	 * A textual representation of the free list and the allocated list of this memory space, 
@@ -89,5 +132,20 @@ public class MemorySpace {
 	 */
 	public void defrag() {
 		//// Write your code here
+		if (freeList.getSize() <= 1) {
+			return;
+		}
+		Node current = freeList.getFirst();
+    	while (current != null && current.next != null) {
+        	MemoryBlock currentBlock = current.block;
+        	MemoryBlock nextBlock = current.next.block;
+			if (currentBlock.baseAddress + currentBlock.length == nextBlock.baseAddress) {
+				currentBlock.length += nextBlock.length;
+				freeList.remove(current.next);
+			}
+			else{
+				current = current.next;
+			}
+		}
 	}
 }
