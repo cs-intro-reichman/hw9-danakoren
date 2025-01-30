@@ -1,3 +1,5 @@
+import java.util.Currency;
+
 /**
  * Represents a managed memory space. The memory space manages a list of allocated 
  * memory blocks, and a list free memory blocks. The methods "malloc" and "free" are 
@@ -60,24 +62,24 @@ public class MemorySpace {
 	public int malloc(int length) {		
 		//// Replace the following statement with your code
 		Node current = freeList.getFirst();
+		Node freeBlock = null;
 		while (current != null) {
-			MemoryBlock freeBlock = current.block;
-			if (freeBlock.length >= length){
-				if (freeBlock.length == length){
-					allocatedList.addLast(freeBlock);
-					freeList.remove(current);
-					return freeBlock.baseAddress;
-				}
-				MemoryBlock allocatedBlock = new MemoryBlock(freeBlock.baseAddress, length);
-				allocatedList.addLast(allocatedBlock);
-				freeBlock.baseAddress += length;
-				freeBlock.length -= length;
-				return allocatedBlock.baseAddress;
-
+			if(current.block.length >= length) {
+				freeBlock = current;
+				break;
 			}
-			current = current.next;	
+			current=current.next;
 		}
-		return -1;
+		if (freeBlock != null) {
+			MemoryBlock newBlock = new MemoryBlock(freeBlock.block.baseAddress , length);
+			allocatedList.addLast(newBlock);
+			int address = freeBlock.block.baseAddress;
+			freeBlock.block.length -= length;
+			freeBlock.block.baseAddress += length;
+			if(freeBlock.block.length == 0) freeList.remove(freeBlock);
+			return address;
+		}
+		return -1;	
 	}
 
 	/**
@@ -90,33 +92,22 @@ public class MemorySpace {
 	 */
 	public void free(int address) {
 		//// Write your code here
-		// Node current = allocatedList.getFirst();
-		// while (current != null) {
-		// 	MemoryBlock allocatedBlock = current.block;
-		// 	if (allocatedBlock.baseAddress == address) {
-		// 		allocatedList.remove(current);
-		// 		freeList.addLast(allocatedBlock);
-		// 		return;
-		// 	}
-		// 	current = current.next;
-		// }
-		// 	throw new IllegalArgumentException("The memory block with the given address is not allocated.");
-		//  }
-		 	if(freeList.getSize() == 1 && freeList.getFirst().block.baseAddress == 0 && freeList.getFirst().block.length == 100)
+		 	if(freeList.getSize() == 1 && freeList.getFirst().block.baseAddress == 0 && freeList.getFirst().block.length == 100){
 			throw new IllegalArgumentException("index must be between 0 and size");
-			ListIterator list = allocatedList.iterator();
-			while(list.hasNext()) {
-				if(list.current.block.baseAddress == address) {
-					allocatedList.remove(list.current.block);
-					freeList.addLast(list.current.block);
-					break;
-				}
-				list.next();
 			}
+			Node current = allocatedList.getNode(0);
+		Node free = null;
+		while(current != null) {
+			if(current.block.baseAddress == address) {
+				free = current;
+				break;
+			}
+			current = current.next;
 		}
-	
-	
-	
+		if(free == null) return;
+		freeList.addLast(free.block);
+		allocatedList.remove(free.block);
+	}
 	
 	/**
 	 * A textual representation of the free list and the allocated list of this memory space, 
@@ -136,6 +127,7 @@ public class MemorySpace {
 		if (freeList.getSize() <= 1) {
 			return;
 		}
+		freelist.sort();
 		Node current = freeList.getFirst();
     	while (current != null && current.next != null) {
         	MemoryBlock currentBlock = current.block;
