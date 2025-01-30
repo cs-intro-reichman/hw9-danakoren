@@ -127,7 +127,7 @@ public class MemorySpace {
 		if (freeList.getSize() <= 1) {
 			return;
 		}
-		freelist.sort();
+		freeList.sort();
 		Node current = freeList.getFirst();
     	while (current != null && current.next != null) {
         	MemoryBlock currentBlock = current.block;
